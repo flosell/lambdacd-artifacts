@@ -22,7 +22,8 @@
 (defn some-build-step [args ctx]
     (step-support/chain args ctx
       (produce-output)
-      (artifacts/publish-artifacts (:cwd args) [#"test2junit/.*"])))
+      (artifacts/publish-artifacts (:cwd args) [#"test2junit/.*"
+                                                "testdata/clojure-icon.gif"])))
 
 (defn wait-for-interaction [args ctx]
   (manualtrigger/wait-for-manual-trigger nil ctx))
