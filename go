@@ -1,5 +1,6 @@
 #!/bin/bash 
 set -e
+SCRIPT_DIR=$(dirname "$0")
 
 test() {
   lein test
@@ -10,8 +11,31 @@ push() {
   test && git push
 }
 
+publishReleaseNotes() {
+    cd ${SCRIPT_DIR}
+
+    VERSION=$(chag latest)
+    CHANGELOG=$(chag contents)
+    USER="flosell"
+    REPO="lambdacd-artifacts"
+
+    echo "Publishing Release to GitHub: "
+    echo "Version ${VERSION}"
+    echo "${CHANGELOG}"
+    echo
+
+    github-release release \
+        --user ${USER} \
+        --repo ${REPO} \
+        --tag ${VERSION} \
+        --name ${VERSION} \
+        --description "${CHANGELOG}"
+
+    echo "Published release"
+}
+
 release() {
-  lein release "$1"
+  lein release "$1" && publishReleaseNotes
 }
 
 serve() {
