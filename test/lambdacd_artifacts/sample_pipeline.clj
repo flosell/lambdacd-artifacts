@@ -7,17 +7,24 @@
             [ring.server.standalone :as ring-server]
             [lambdacd.util :as util]
             [lambdacd.ui.ui-server :as ui]
+            [lambdacd.steps.support :as step-support]
             [lambdacd.runners :as runners]
+            [lambdacd-artifacts.core :as artifacts]
             [ring.util.response :as resp]))
 
 (defn some-failing-step [args ctx]
   (shell/bash ctx "/"
               "exit 1"))
 
+(defn produce-output [_ ctx cwd]
+  (shell/bash ctx cwd "echo yay > foo.txt"))
+
 (defn some-successful-step [args ctx]
-  (shell/bash ctx "/"
-              "echo yay"
-              "exit 0"))
+  (let [cwd (util/create-temp-dir)]
+    (util/with-temp cwd
+      (step-support/chain args ctx
+        (produce-output cwd)
+        (artifacts/publish-artifacts cwd ["foo.txt"])))))
 
 (defn wait-for-interaction [args ctx]
   (manualtrigger/wait-for-manual-trigger nil ctx))
@@ -29,16 +36,18 @@
     some-successful-step)))
 
 
-(defn mk-routes [ pipeline-routes]
+(defn mk-routes [ pipeline-routes artifacts]
   (routes
     (GET "/" [] (resp/redirect "pipeline/"))
-    (context "/pipeline" [] pipeline-routes)))
+    (context "/pipeline" [] pipeline-routes)
+    (context "/artifacts" [] artifacts)))
 
 (defn -main [& args]
   (let [home-dir (if (not (empty? args)) (first args) (util/create-temp-dir))
         config { :home-dir home-dir }
         pipeline (lambdacd/assemble-pipeline pipeline-structure config)]
     (runners/start-one-run-after-another pipeline)
-    (ring-server/serve (mk-routes (ui/ui-for pipeline))
+    (ring-server/serve (mk-routes (ui/ui-for pipeline)
+                                  (artifacts/artifact-handler-for pipeline))
                                   {:open-browser? true
                                    :port 8081})))
