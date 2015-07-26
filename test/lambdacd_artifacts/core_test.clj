@@ -24,17 +24,19 @@
   (apply file-with-parents cwd (str build-number) step-id file-path))
 
 (deftest publish-artifacts-test
+  (let [cwd      (util/create-temp-dir)
+        home-dir (util/create-temp-dir)
+        ctx      (ctx home-dir 1 [2 3] "artifacts-path")]
+  (spit (file-with-parents cwd "foo.txt") "hello content")
   (testing "that a specified file is copied to the archive folder"
-    (let [cwd      (util/create-temp-dir)
-          home-dir (util/create-temp-dir)
-          ctx      (ctx home-dir 1 [2 3] "artifacts-path")]
-      (spit (file-with-parents cwd "foo.txt") "hello content")
-      (let [publish-artifacts-result (publish-artifacts {} ctx cwd ["foo.txt"] )]
-        (is (map-containing {:status :success} publish-artifacts-result))
-        (is (= "hello content" (slurp (file-path-for home-dir 1 "2-3" "foo.txt"))))
-        (is (map-containing {:details [{:label "Artifacts"
-                                        :details [{:label "foo.txt"
-                                                   :href  "artifacts-path/1/2-3/foo.txt"}]}]} publish-artifacts-result))))))
+    (publish-artifacts {} ctx cwd ["foo.txt"])
+    (is (= "hello content" (slurp (file-path-for home-dir 1 "2-3" "foo.txt")))))
+  (testing "the step is successful"
+    (is (map-containing {:status :success} (publish-artifacts {} ctx cwd ["foo.txt"] ))))
+  (testing "that it returns a map with details about the artifacts it published"
+    (is (map-containing {:details [{:label "Artifacts"
+                                    :details [{:label "foo.txt"
+                                               :href  "artifacts-path/1/2-3/foo.txt"}]}]} (publish-artifacts {} ctx cwd ["foo.txt"] ))))))
 
 ;; TODO: more than one pattern should be supported
 ;; TODO: actual patterns should be supported
