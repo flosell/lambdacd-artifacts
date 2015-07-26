@@ -46,6 +46,6 @@ Call `./go`
 
 ## License
 
-Copyright © 2014 Florian Sellmayr
+Copyright © 2015 Florian Sellmayr
 
 Distributed under the Apache License 2.0
