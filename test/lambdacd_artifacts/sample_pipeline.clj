@@ -22,7 +22,7 @@
 (defn some-build-step [args ctx]
     (step-support/chain args ctx
       (produce-output)
-      (artifacts/publish-artifacts (:cwd args) ["foo.txt"])))
+      (artifacts/publish-artifacts (:cwd args) [#"test2junit/.*"])))
 
 (defn wait-for-interaction [args ctx]
   (manualtrigger/wait-for-manual-trigger nil ctx))

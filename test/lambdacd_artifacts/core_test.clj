@@ -40,6 +40,7 @@
     (spit (file-with-parents cwd "foo.txt") "hello content")
     (spit (file-with-parents cwd "foobar.txt") "hello content")
     (spit (file-with-parents cwd "dir1" "bar.txt") "hello subdirectory")
+    (spit (file-with-parents cwd "dir1" "dir2" "somethingelse") "this is generated mostly so we check that it still works when subdirs are found matching")
 
     (testing "that a specified file is copied to the archive folder"
       (publish-artifacts {} ctx cwd ["foo.txt"])
@@ -62,7 +63,8 @@
       (is (= #{"/1/2-3/foo.txt"
                "/1/2-3/foobar.txt"}
              (artifacts (publish-artifacts {} ctx cwd [#"foo.*"]))))
-      (is (= #{"/1/2-3/dir1/bar.txt"}
+      (is (= #{"/1/2-3/dir1/bar.txt"
+               "/1/2-3/dir1/dir2/somethingelse"}
              (artifacts (publish-artifacts {} ctx cwd [#"dir1/.*"]))))
       (is (= #{"/1/2-3/dir1/bar.txt"}
              (artifacts (publish-artifacts {} ctx cwd [#".*/bar.txt"]))))
