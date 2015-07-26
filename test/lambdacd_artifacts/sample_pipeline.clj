@@ -16,7 +16,7 @@
 (defn ^{ :display-type :container} with-git [& steps]
   (git/with-git "git@github.com:flosell/lambdacd-artifacts" steps))
 
-(defn produce-output [args ctx ]
+(defn produce-output [args ctx]
   (shell/bash ctx (:cwd args) "lein test2junit"))
 
 (defn some-build-step [args ctx]
@@ -35,7 +35,7 @@
 
 (def artifacts-path-context "/artifacts")
 
-(defn mk-routes [ pipeline-routes artifacts]
+(defn mk-routes [pipeline-routes artifacts]
   (routes
     (GET "/" [] (resp/redirect "pipeline/"))
     (context "/pipeline" [] pipeline-routes)
