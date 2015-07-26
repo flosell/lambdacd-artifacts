@@ -9,5 +9,5 @@ pom.xml.asc
 /.nrepl-port
 .idea
 *.iml
-.vagrant
-/resources/public/ui2/semantic-ui/
+test2junit
+build.xml

@@ -8,6 +8,8 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [compojure "1.1.8"]
                  [lambdacd "0.4.3"]]
+  :test2junit-run-ant true
   :profiles {:dev {:dependencies [[ring-server "0.3.1"]
                                   [ring/ring-mock "0.2.0"]]
-                   :main lambdacd-artifacts.sample-pipeline}})
+                   :main lambdacd-artifacts.sample-pipeline
+                   :plugins [[test2junit "1.1.1"]]}})

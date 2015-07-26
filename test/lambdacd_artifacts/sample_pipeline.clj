@@ -7,34 +7,30 @@
             [ring.server.standalone :as ring-server]
             [lambdacd.util :as util]
             [lambdacd.ui.ui-server :as ui]
+            [lambdacd.steps.git :as git]
             [lambdacd.steps.support :as step-support]
             [lambdacd.runners :as runners]
             [lambdacd-artifacts.core :as artifacts]
             [ring.util.response :as resp]))
 
-(defn some-failing-step [args ctx]
-  (shell/bash ctx "/"
-              "exit 1"))
+(defn ^{ :display-type :container} with-git [& steps]
+  (git/with-git "git@github.com:flosell/lambdacd-artifacts" steps))
 
-(defn produce-output [_ ctx cwd]
-  (shell/bash ctx cwd "echo yay > foo.txt"))
+(defn produce-output [args ctx ]
+  (shell/bash ctx (:cwd args) "lein test2junit"))
 
-(defn some-successful-step [args ctx]
-  (let [cwd (util/create-temp-dir)]
-    (util/with-temp cwd
-      (step-support/chain args ctx
-        (produce-output cwd)
-        (artifacts/publish-artifacts cwd ["foo.txt"])))))
+(defn some-build-step [args ctx]
+    (step-support/chain args ctx
+      (produce-output)
+      (artifacts/publish-artifacts (:cwd args) ["foo.txt"])))
 
 (defn wait-for-interaction [args ctx]
   (manualtrigger/wait-for-manual-trigger nil ctx))
 
 (def pipeline-structure `(
  (run wait-for-interaction)
-  (either
-    some-failing-step
-    some-successful-step)))
-
+ (with-git
+   some-build-step)))
 
 (def artifacts-path-context "/artifacts")
 
