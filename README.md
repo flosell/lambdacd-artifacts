@@ -40,7 +40,7 @@ browser.
 ```
 
 You'll find the paths to the published artifacts in the detailed step-result. The next version of LambdaCD will provide
-a proper UI to display those links. 
+a proper UI to display those links (see flosell/lambdacd#37). 
 
 For a full example, see [test/lambdacd_artifacts/sample_pipeline.clj](test/lambdacd_artifacts/sample_pipeline.clj)
 
