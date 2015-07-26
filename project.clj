@@ -7,8 +7,7 @@
                         ["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [compojure "1.1.8"]
-                 [lambdacd "0.4.3"]
-                 [me.raynes/fs "1.4.6"]]
+                 [lambdacd "0.4.3"]]
   :profiles {:dev {:dependencies [[ring-server "0.3.1"]
                                   [ring/ring-mock "0.2.0"]]
                    :main lambdacd-artifacts.sample-pipeline}})

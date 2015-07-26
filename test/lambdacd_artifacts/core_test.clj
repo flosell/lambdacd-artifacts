@@ -11,35 +11,65 @@
        (every? #(= (m %)(expected %)) (keys expected))))
 
 
-(defn- ctx [home-dir build-number step-id artifacts-context]
+(defn- ctx-with [home-dir build-number step-id artifacts-context]
   {:config {:home-dir home-dir
             :artifacts-path-context artifacts-context}
    :build-number build-number
    :step-id step-id})
 
 (defn- pipeline-with-homedir [home-dir]
-  {:context (ctx home-dir 1 "2-3" "some-artifacts-dir")})
+  {:context (ctx-with home-dir 1 "2-3" "some-artifacts-dir")})
 
-(defn file-path-for [cwd build-number step-id & file-path]
+(defn- file-path-for [cwd build-number step-id & file-path]
   (apply file-with-parents cwd (str build-number) step-id file-path))
 
-(deftest publish-artifacts-test
-  (let [cwd      (util/create-temp-dir)
-        home-dir (util/create-temp-dir)
-        ctx      (ctx home-dir 1 [2 3] "artifacts-path")]
-  (spit (file-with-parents cwd "foo.txt") "hello content")
-  (testing "that a specified file is copied to the archive folder"
-    (publish-artifacts {} ctx cwd ["foo.txt"])
-    (is (= "hello content" (slurp (file-path-for home-dir 1 "2-3" "foo.txt")))))
-  (testing "the step is successful"
-    (is (map-containing {:status :success} (publish-artifacts {} ctx cwd ["foo.txt"] ))))
-  (testing "that it returns a map with details about the artifacts it published"
-    (is (map-containing {:details [{:label "Artifacts"
-                                    :details [{:label "foo.txt"
-                                               :href  "artifacts-path/1/2-3/foo.txt"}]}]} (publish-artifacts {} ctx cwd ["foo.txt"] ))))))
+(defn artifacts [publish-artifacts-result]
+  (->> publish-artifacts-result
+       :details
+       (map :details)
+       (flatten)
+       (map :href)
+       (flatten)
+       (into #{})))
 
-;; TODO: more than one pattern should be supported
-;; TODO: actual patterns should be supported
+(deftest publish-artifacts-test
+  (let [cwd (util/create-temp-dir)
+        home-dir (util/create-temp-dir)
+        ctx (ctx-with home-dir 1 [2 3] "")
+        ctx-with-artifacts-path (ctx-with home-dir 1 [2 3] "artifacts-path")]
+    (spit (file-with-parents cwd "foo.txt") "hello content")
+    (spit (file-with-parents cwd "foobar.txt") "hello content")
+    (spit (file-with-parents cwd "dir1" "bar.txt") "hello subdirectory")
+
+    (testing "that a specified file is copied to the archive folder"
+      (publish-artifacts {} ctx cwd ["foo.txt"])
+      (is (= "hello content" (slurp (file-path-for home-dir 1 "2-3" "foo.txt")))))
+    (testing "the step is successful"
+      (is (map-containing {:status :success} (publish-artifacts {} ctx cwd ["foo.txt"]))))
+    (testing "that it returns a map with details about the artifacts it published"
+      (is (map-containing {:details [{:label   "Artifacts"
+                                      :details [{:label "foo.txt"
+                                                 :href  "artifacts-path/1/2-3/foo.txt"}]}]} (publish-artifacts {} ctx-with-artifacts-path cwd ["foo.txt"]))))
+    (testing "that it can match exact paths"
+      (is (= #{"/1/2-3/foo.txt"}
+             (artifacts (publish-artifacts {} ctx cwd ["foo.txt"]))))
+      (is (= #{"/1/2-3/dir1/bar.txt"}
+             (artifacts (publish-artifacts {} ctx cwd ["dir1/bar.txt"]))))
+      (is (= #{"/1/2-3/dir1/bar.txt"
+               "/1/2-3/foo.txt"}
+             (artifacts (publish-artifacts {} ctx cwd ["dir1/bar.txt" "foo.txt"])))))
+    (testing "that it supports regexes"
+      (is (= #{"/1/2-3/foo.txt"
+               "/1/2-3/foobar.txt"}
+             (artifacts (publish-artifacts {} ctx cwd [#"foo.*"]))))
+      (is (= #{"/1/2-3/dir1/bar.txt"}
+             (artifacts (publish-artifacts {} ctx cwd [#"dir1/.*"]))))
+      (is (= #{"/1/2-3/dir1/bar.txt"}
+             (artifacts (publish-artifacts {} ctx cwd [#".*/bar.txt"]))))
+      (is (= #{"/1/2-3/dir1/bar.txt"
+               "/1/2-3/foo.txt"
+               "/1/2-3/foobar.txt"}
+             (artifacts (publish-artifacts {} ctx cwd [#"(.*)\.txt"])))))))
 
 (deftest artifact-handler-for-test
   (let [home-dir (util/create-temp-dir)
@@ -74,7 +104,7 @@
   (testing "that we can publish an artifact and get it back from the details supplied in the step-result"
     (let [cwd      (util/create-temp-dir)
           home-dir (util/create-temp-dir)
-          ctx      (ctx home-dir 1 [2 3] "")
+          ctx      (ctx-with home-dir 1 [2 3] "")
           pipeline {:context ctx}
           handler  (artifact-handler-for pipeline)]
       (spit (file-with-parents cwd "foo.txt") "hello content")
