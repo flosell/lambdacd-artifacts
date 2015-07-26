@@ -36,15 +36,18 @@
     some-successful-step)))
 
 
+(def artifacts-path-context "/artifacts")
+
 (defn mk-routes [ pipeline-routes artifacts]
   (routes
     (GET "/" [] (resp/redirect "pipeline/"))
     (context "/pipeline" [] pipeline-routes)
-    (context "/artifacts" [] artifacts)))
+    (context artifacts-path-context [] artifacts)))
 
 (defn -main [& args]
   (let [home-dir (if (not (empty? args)) (first args) (util/create-temp-dir))
-        config { :home-dir home-dir }
+        config {:home-dir home-dir
+                :artifacts-path-context artifacts-path-context}
         pipeline (lambdacd/assemble-pipeline pipeline-structure config)]
     (runners/start-one-run-after-another pipeline)
     (ring-server/serve (mk-routes (ui/ui-for pipeline)

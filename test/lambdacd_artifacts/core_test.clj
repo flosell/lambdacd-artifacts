@@ -10,17 +10,15 @@
   (and (every? (set (keys m)) (keys expected))
        (every? #(= (m %)(expected %)) (keys expected))))
 
-(defn- file-in [dir]
-  (->> (file-seq (io/file dir))
-       (filter #(.isFile %))))
 
-(defn- ctx [home-dir build-number step-id]
-  {:config {:home-dir home-dir}
+(defn- ctx [home-dir build-number step-id artifacts-context]
+  {:config {:home-dir home-dir
+            :artifacts-path-context artifacts-context}
    :build-number build-number
    :step-id step-id})
 
 (defn- pipeline-with-homedir [home-dir]
-  {:context (ctx home-dir 1 "2-3")})
+  {:context (ctx home-dir 1 "2-3" "some-artifacts-dir")})
 
 (defn file-path-for [cwd build-number step-id & file-path]
   (apply file-with-parents cwd (str build-number) step-id file-path))
@@ -29,11 +27,14 @@
   (testing "that a specified file is copied to the archive folder"
     (let [cwd      (util/create-temp-dir)
           home-dir (util/create-temp-dir)
-          ctx      (ctx home-dir 1 "2-3")]
+          ctx      (ctx home-dir 1 [2 3] "artifacts-path")]
       (spit (file-with-parents cwd "foo.txt") "hello content")
       (let [publish-artifacts-result (publish-artifacts {} ctx cwd ["foo.txt"] )]
         (is (map-containing {:status :success} publish-artifacts-result))
-        (is (= "hello content" (slurp (file-path-for home-dir 1 "2-3" "foo.txt"))))))))
+        (is (= "hello content" (slurp (file-path-for home-dir 1 "2-3" "foo.txt"))))
+        (is (map-containing {:details [{:label "Artifacts"
+                                        :details [{:label "foo.txt"
+                                                   :href  "artifacts-path/1/2-3/foo.txt"}]}]} publish-artifacts-result))))))
 
 ;; TODO: more than one pattern should be supported
 ;; TODO: actual patterns should be supported
@@ -66,3 +67,16 @@
       (spit (file-path-for home-dir 3 "2-3" "some-file") "hello world") ; create a base from which we could break out
       (let [response (handler (mock/request :get "/3/2-3/../../1/2-3/some-file"))]
         (is (= 404 (:status response)))))))
+
+(deftest integration-test
+  (testing "that we can publish an artifact and get it back from the details supplied in the step-result"
+    (let [cwd      (util/create-temp-dir)
+          home-dir (util/create-temp-dir)
+          ctx      (ctx home-dir 1 [2 3] "")
+          pipeline {:context ctx}
+          handler  (artifact-handler-for pipeline)]
+      (spit (file-with-parents cwd "foo.txt") "hello content")
+      (let [publish-artifacts-result (publish-artifacts {} ctx cwd ["foo.txt"])
+            first-artifact-href      (:href (first (:details (first (:details publish-artifacts-result)))))
+            first-artifact-response  (handler (mock/request :get first-artifact-href))]
+        (is (= 200 (:status first-artifact-response)))))))

@@ -20,11 +20,15 @@
         (file-result home-dir buildnumber stepid *)))))
 
 (defn publish-artifacts [args ctx working-directory patterns]
-  (let [home-dir     (:home-dir (:config ctx))
-        build-number (:build-number ctx)
-        step-id      (:step-id ctx)
-        output-file  (io/file home-dir (str build-number) step-id (first patterns))]
+  (let [home-dir      (:home-dir (:config ctx))
+        artifacts-dir (:artifacts-path-context (:config ctx))
+        build-number  (:build-number ctx)
+        step-id       (:step-id ctx)
+        output-file   (io/file home-dir (str build-number) (s/join "-" step-id) (first patterns))]
+    (println step-id output-file)
     (io/make-parents output-file)
     (io/copy (io/file working-directory (first patterns)) output-file)
     {:status :success
-     :details []}))
+     :details [{:label "Artifacts"
+                :details [{:label (first patterns)
+                           :href  (str artifacts-dir "/" (str build-number) "/" (s/join "-" step-id) "/" (first patterns))}]}]}))
