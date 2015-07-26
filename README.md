@@ -31,7 +31,8 @@ browser.
 (defn -main [& args]
   (let [; ...
         config {:home-dir home-dir ; this is where artifacts are stored
-                :artifacts-path-context artifacts-path-context}]
+                :artifacts-path-context artifacts-path-context}
+        pipeline (lambdacd/assemble-pipeline pipeline-structure config)]
     ; ...
     ; set up routes to your pipeline and to your artifacts
     (ring-server/serve (routes
