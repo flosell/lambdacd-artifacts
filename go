@@ -6,7 +6,6 @@ test() {
   lein test
 }
 
-
 push() {
   test && git push
 }
@@ -35,7 +34,7 @@ publishReleaseNotes() {
 }
 
 release() {
-  lein release "$1" && publishReleaseNotes
+  test && lein release && publishReleaseNotes
 }
 
 serve() {
