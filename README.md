@@ -40,8 +40,7 @@ browser.
                          (context artifacts-path-context [] (artifacts/artifact-handler-for pipeline)))))
 ```
 
-You'll find the paths to the published artifacts in the detailed step-result. The next version of LambdaCD will provide
-a proper UI to display those links (see [flosell/lambdacd#37](https://github.com/flosell/lambdacd/issues/37)).
+Paths to the artifacts will be stored under the `:details` key in the step result and displayed in the UI. 
 
 For a full example, see [test/lambdacd_artifacts/sample_pipeline.clj](test/lambdacd_artifacts/sample_pipeline.clj)
 
