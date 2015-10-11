@@ -19,6 +19,7 @@
 (defn produce-output [args ctx]
   (shell/bash ctx (:cwd args) "lein test2junit"))
 
+;; TODO: upgrade to chaining-macro after release (#39)
 (defn some-build-step [args ctx]
     (step-support/chain args ctx
       (produce-output)
