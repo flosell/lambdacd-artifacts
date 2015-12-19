@@ -41,7 +41,7 @@ serve() {
   lein run
 }
 
-if type $1 &>/dev/null; then
+if [ $# -ne 0 ] && type $1 &>/dev/null; then
     $1 $2
 else
     echo "usage: $0 <goal>
