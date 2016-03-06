@@ -8,7 +8,7 @@
             [lambdacd.util :as util]
             [lambdacd.ui.ui-server :as ui]
             [lambdacd.steps.git :as git]
-            [lambdacd.steps.support :as step-support]
+            [lambdacd.steps.support :as step-support :refer [injected-ctx injected-args]]
             [lambdacd.runners :as runners]
             [lambdacd-artifacts.core :as artifacts]
             [ring.util.response :as resp]))
@@ -19,12 +19,12 @@
 (defn produce-output [args ctx]
   (shell/bash ctx (:cwd args) "lein test2junit"))
 
-;; TODO: upgrade to chaining-macro after release (#39)
 (defn some-build-step [args ctx]
-    (step-support/chain args ctx
-      (produce-output)
-      (artifacts/publish-artifacts (:cwd args) [#"test2junit/.*"
-                                                "testdata/clojure-icon.gif"])))
+    (step-support/chaining args ctx
+      (produce-output injected-args injected-ctx)
+      (artifacts/publish-artifacts injected-args injected-ctx
+                                   (:cwd injected-args) [#"test2junit/.*"
+                                                                      "testdata/clojure-icon.gif"])))
 
 (defn wait-for-interaction [args ctx]
   (manualtrigger/wait-for-manual-trigger nil ctx))

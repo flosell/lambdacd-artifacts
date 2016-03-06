@@ -5,9 +5,9 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :deploy-repositories [["clojars" {:creds :gpg}]
                         ["releases" :clojars]]
-  :dependencies [[org.clojure/clojure "1.6.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [compojure "1.1.8"]
-                 [lambdacd "0.4.3"]]
+                 [lambdacd "0.7.0"]]
   :test2junit-run-ant true
   :profiles {:dev {:dependencies [[ring-server "0.3.1"]
                                   [ring/ring-mock "0.2.0"]]
