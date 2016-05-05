@@ -17,10 +17,12 @@
   (git/with-git "git@github.com:flosell/lambdacd-artifacts" steps))
 
 (defn produce-output [args ctx]
-  (shell/bash ctx (:cwd args) "lein test2junit"))
+  (shell/bash ctx (:cwd args)
+              "lein test2junit"
+              "exit 1"))
 
 (defn some-build-step [args ctx]
-    (step-support/chaining args ctx
+    (step-support/always-chaining args ctx
       (produce-output injected-args injected-ctx)
       (artifacts/publish-artifacts injected-args injected-ctx
                                    (:cwd injected-args) [#"test2junit/.*"

@@ -20,10 +20,11 @@ browser.
 
 ; the build-step you put in your pipeline: first build artifacts, then publish them
 (defn some-build-step [args ctx]
-  (step-support/chain args ctx
-    (produce-output)
-    (artifacts/publish-artifacts (:cwd args) [#"report-folder/.*"
-                                              "some-folder/someBinary.jar"])))
+  (step-support/chaining args ctx ; use always-chaining if you want the artifact even if previous steps failed (e.g. for test reports)
+    (produce-output injected-args injected-ctx)
+    (artifacts/publish-artifacts injected-args injected-ctx
+                                 (:cwd injected-args) [#"report-folder/.*"
+                                                       "some-folder/someBinary.jar"])))
 
 ; url prefix where your artifacts will be available
 (def artifacts-path-context "/artifacts")
