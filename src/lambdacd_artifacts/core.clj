@@ -7,9 +7,19 @@
   (:import (java.io File)
            (java.nio.file Paths)))
 
+(defn- find-latest-artifact [home-dir step-id path]
+  (let [home-file (io/file home-dir)
+        build-directories (.listFiles home-file)
+        latest-build-directory (last (filter #(.exists (io/file % step-id path)) build-directories))]
+    (io/file latest-build-directory step-id)))
+
+(defn root-path [home-dir build-number step-id path]
+  (if (= build-number "latest")
+         (find-latest-artifact home-dir step-id path)
+         (io/file home-dir (str build-number) step-id)))
 
 (defn file-result [home-dir build-number step-id path]
-  (let [root (io/file home-dir (str build-number) step-id)
+  (let [root (root-path home-dir build-number step-id path)
         file-response (response/file-response path {:root (str root)})]
     (if file-response
       file-response
