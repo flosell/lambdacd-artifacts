@@ -1,6 +1,6 @@
 # Changelog
 
-## next
+## 0.1.1
 
 * resolve paths with build number `latest` to last available artifact
 
