@@ -41,7 +41,8 @@ browser.
                          (context artifacts-path-context [] (artifacts/artifact-handler-for pipeline)))))
 ```
 
-Paths to the artifacts will be stored under the `:details` key in the step result and displayed in the UI. 
+Paths to the artifacts will be stored under the `:details` key in the step result and displayed in the UI.
+The latest available artifact is served under `/latest/$step-id/...` as well.
 
 For a full example, see [test/lambdacd_artifacts/sample_pipeline.clj](test/lambdacd_artifacts/sample_pipeline.clj)
 
