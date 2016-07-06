@@ -69,6 +69,7 @@
                                  (map #(find-files-matching % working-dir ))
                                  (flatten)
                                  (filter #(not (.isDirectory %)))
+                                 (sort)
                                  (map #(copy-file ctx working-dir %1))
                                  (flatten)))
         file-details (map #(file-details ctx %) output-files)]
