@@ -40,8 +40,7 @@
        (map :details)
        (flatten)
        (map :href)
-       (flatten)
-       (into #{})))
+       (flatten)))
 
 (deftest publish-artifacts-test
   (let [cwd (util/create-temp-dir)
@@ -63,25 +62,25 @@
                                       :details [{:label "foo.txt"
                                                  :href  "artifacts-path/1/2-3/foo.txt"}]}]} (publish-artifacts {} ctx-with-artifacts-path cwd ["foo.txt"]))))
     (testing "that it can match exact paths"
-      (is (= #{"/1/2-3/foo.txt"}
+      (is (= '("/1/2-3/foo.txt")
              (artifacts (publish-artifacts {} ctx cwd ["foo.txt"]))))
-      (is (= #{"/1/2-3/dir1/bar.txt"}
+      (is (= '("/1/2-3/dir1/bar.txt")
              (artifacts (publish-artifacts {} ctx cwd ["dir1/bar.txt"]))))
-      (is (= #{"/1/2-3/dir1/bar.txt"
-               "/1/2-3/foo.txt"}
+      (is (= '("/1/2-3/dir1/bar.txt"
+               "/1/2-3/foo.txt")
              (artifacts (publish-artifacts {} ctx cwd ["dir1/bar.txt" "foo.txt"])))))
     (testing "that it supports regexes"
-      (is (= #{"/1/2-3/foo.txt"
-               "/1/2-3/foobar.txt"}
+      (is (= '("/1/2-3/foo.txt"
+               "/1/2-3/foobar.txt")
              (artifacts (publish-artifacts {} ctx cwd [#"foo.*"]))))
-      (is (= #{"/1/2-3/dir1/bar.txt"
-               "/1/2-3/dir1/dir2/somethingelse"}
+      (is (= '("/1/2-3/dir1/bar.txt"
+               "/1/2-3/dir1/dir2/somethingelse")
              (artifacts (publish-artifacts {} ctx cwd [#"dir1/.*"]))))
-      (is (= #{"/1/2-3/dir1/bar.txt"}
+      (is (= '("/1/2-3/dir1/bar.txt")
              (artifacts (publish-artifacts {} ctx cwd [#".*/bar.txt"]))))
-      (is (= #{"/1/2-3/dir1/bar.txt"
+      (is (= '("/1/2-3/dir1/bar.txt"
                "/1/2-3/foo.txt"
-               "/1/2-3/foobar.txt"}
+               "/1/2-3/foobar.txt")
              (artifacts (publish-artifacts {} ctx cwd [#"(.*)\.txt"])))))))
 
 (deftest artifact-handler-for-test
