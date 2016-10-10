@@ -4,12 +4,14 @@
             [ring.util.response :as response]
             [compojure.route :refer :all]
             [compojure.core :refer :all])
-  (:import (java.io File)
-           (java.nio.file Paths)))
+  (:import (java.nio.file Paths)))
+
+(defn- file-to-build-id [f]
+  (read-string (.getName f)))
 
 (defn- find-latest-artifact [home-dir step-id path]
   (let [home-file (io/file home-dir)
-        build-directories (.listFiles home-file)
+        build-directories (sort-by file-to-build-id (.listFiles home-file))
         latest-build-directory (last (filter #(.exists (io/file % step-id path)) build-directories))]
     (io/file latest-build-directory step-id)))
 

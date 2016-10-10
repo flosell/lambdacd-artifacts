@@ -12,11 +12,12 @@
             (spit (file-with-parents home-dir "2" "some-step-id" "some-artifact.txt") "uber content")
             (spit (file-with-parents home-dir "3" "some-step-id" "some-other-artifact.txt") "not so uber content")
             (spit (file-with-parents home-dir "4" "some-other-step-id" "some-artifact.txt") "what do you care?")
+            (spit (file-with-parents home-dir "10" "some-step-id" "some-artifact.txt") "uber content")
 
             (testing "that explicit build-number selection works"
               (is (= (io/file home-dir "1" "some-step-id") (root-path home-dir 1 "some-step-id" "some-artifact.txt"))))
             (testing "that 'latest' picks the latest available artifact"
-              (is (= (io/file home-dir "2" "some-step-id") (root-path home-dir "latest" "some-step-id" "some-artifact.txt"))))))
+              (is (= (io/file home-dir "10" "some-step-id") (root-path home-dir "latest" "some-step-id" "some-artifact.txt"))))))
 
 (defn map-containing [expected m]
   (and (every? (set (keys m)) (keys expected))
