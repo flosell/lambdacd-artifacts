@@ -32,8 +32,8 @@
 (defn- pipeline-with-homedir [home-dir]
   {:context (ctx-with home-dir 1 "2-3" "some-artifacts-dir")})
 
-(defn- file-path-for [cwd build-number step-id & file-path]
-  (apply file-with-parents cwd (str build-number) step-id file-path))
+(defn- file-path-for [home-dir build-number step-id & file-path]
+  (apply file-with-parents home-dir "lambdacd-artifacts" (str build-number) step-id file-path))
 
 (defn artifacts [publish-artifacts-result]
   (->> publish-artifacts-result

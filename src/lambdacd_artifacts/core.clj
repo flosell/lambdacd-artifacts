@@ -6,32 +6,37 @@
             [compojure.core :refer :all])
   (:import (java.nio.file Paths)))
 
+(defn- artifacts-root-dir [ctx]
+  (let [home-dir (:home-dir (:config ctx))
+        root-dir (io/file home-dir "lambdacd-artifacts")]
+    (.mkdirs root-dir)
+    root-dir))
+
 (defn- file-to-build-id [f]
   (read-string (.getName f)))
 
-(defn- find-latest-artifact [home-dir step-id path]
-  (let [home-file (io/file home-dir)
-        build-directories (sort-by file-to-build-id (.listFiles home-file))
+(defn- find-latest-artifact [artifacts-root step-id path]
+  (let [build-directories      (sort-by file-to-build-id (.listFiles (io/file artifacts-root)))
         latest-build-directory (last (filter #(.exists (io/file % step-id path)) build-directories))]
     (io/file latest-build-directory step-id)))
 
-(defn root-path [home-dir build-number step-id path]
+(defn root-path [artifacts-root build-number step-id path]
   (if (= build-number "latest")
-         (find-latest-artifact home-dir step-id path)
-         (io/file home-dir (str build-number) step-id)))
+    (find-latest-artifact artifacts-root step-id path)
+    (io/file artifacts-root (str build-number) step-id)))
 
-(defn file-result [home-dir build-number step-id path]
-  (let [root (root-path home-dir build-number step-id path)
+(defn file-result [artifacts-root build-number step-id path]
+  (let [root          (root-path artifacts-root build-number step-id path)
         file-response (response/file-response path {:root (str root)})]
     (if file-response
       file-response
       (response/not-found (str "could not find " path " for build number " build-number " and step-id " step-id)))))
 
 (defn artifact-handler-for [pipeline]
-  (let [home-dir (:home-dir (:config (:context pipeline)))]
+  (let [artifacts-root (artifacts-root-dir (:context pipeline))]
     (routes
       (GET "/:buildnumber/:stepid/*" [buildnumber stepid *]
-        (file-result home-dir buildnumber stepid *)))))
+        (file-result artifacts-root buildnumber stepid *)))))
 
 (defn relative-path [base-dir file]
   (let [base-path (Paths/get (.toURI base-dir))
@@ -52,29 +57,30 @@
 (defn format-step-id [step-id]
   (s/join "-" step-id))
 
-(defn- copy-file [{step-id :step-id build-number :build-number { home-dir :home-dir} :config} working-directory input-file]
+(defn- copy-file [{step-id :step-id build-number :build-number} artifacts-root working-directory input-file]
   (let [file-name      (.getName input-file)
         output-parent  (butlast (s/split (str (relative-path (io/file working-directory) input-file)) #"/"))
         output-parts   (concat [(str build-number) (format-step-id step-id)] output-parent [file-name])
-        output-file    (apply io/file home-dir output-parts)]
+        output-file    (apply io/file artifacts-root output-parts)]
     (io/make-parents output-file)
     (io/copy input-file output-file)
     output-file))
 
-(defn file-details [{{home-dir :home-dir artifacts-dir :artifacts-path-context} :config} output-file]
+(defn file-details [{{artifacts-path :artifacts-path-context} :config} artifacts-root-dir output-file]
     {:label (.getName output-file)
-     :href  (str artifacts-dir "/" (relative-path (io/file home-dir) output-file))})
+     :href  (str artifacts-path "/" (relative-path (io/file artifacts-root-dir) output-file))})
 
 (defn publish-artifacts [args ctx cwd patterns]
-  (let [working-dir  (io/file cwd)
-        output-files (doall (->> patterns
-                                 (map #(find-files-matching % working-dir ))
-                                 (flatten)
-                                 (filter #(not (.isDirectory %)))
-                                 (sort)
-                                 (map #(copy-file ctx working-dir %1))
-                                 (flatten)))
-        file-details (map #(file-details ctx %) output-files)]
-    {:status :success
-     :details [{:label "Artifacts"
+  (let [working-dir    (io/file cwd)
+        artifacts-root (artifacts-root-dir ctx)
+        output-files   (doall (->> patterns
+                                   (map #(find-files-matching % working-dir))
+                                   (flatten)
+                                   (filter #(not (.isDirectory %)))
+                                   (sort)
+                                   (map #(copy-file ctx artifacts-root working-dir %1))
+                                   (flatten)))
+        file-details   (map #(file-details ctx artifacts-root %) output-files)]
+    {:status  :success
+     :details [{:label   "Artifacts"
                 :details file-details}]}))
