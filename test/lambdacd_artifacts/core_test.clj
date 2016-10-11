@@ -6,18 +6,18 @@
             [ring.mock.request :as mock]
             [lambdacd.util :as util]))
 
-(deftest root-path-test
-          (let [home-dir (util/create-temp-dir)]
-            (spit (file-with-parents home-dir "1" "some-step-id" "some-artifact.txt") "uber content")
-            (spit (file-with-parents home-dir "2" "some-step-id" "some-artifact.txt") "uber content")
-            (spit (file-with-parents home-dir "3" "some-step-id" "some-other-artifact.txt") "not so uber content")
-            (spit (file-with-parents home-dir "4" "some-other-step-id" "some-artifact.txt") "what do you care?")
-            (spit (file-with-parents home-dir "10" "some-step-id" "some-artifact.txt") "uber content")
+(deftest build-number-or-latest-test
+  (let [home-dir (util/create-temp-dir) ]
+    (spit (file-with-parents home-dir "1" "some-step-id" "some-artifact.txt") "uber content")
+    (spit (file-with-parents home-dir "2" "some-step-id" "some-artifact.txt") "uber content")
+    (spit (file-with-parents home-dir "3" "some-step-id" "some-other-artifact.txt") "not so uber content")
+    (spit (file-with-parents home-dir "4" "some-other-step-id" "some-artifact.txt") "what do you care?")
+    (spit (file-with-parents home-dir "10" "some-step-id" "some-artifact.txt") "uber content")
 
-            (testing "that explicit build-number selection works"
-              (is (= (io/file home-dir "1" "some-step-id") (root-path home-dir 1 "some-step-id" "some-artifact.txt"))))
-            (testing "that 'latest' picks the latest available artifact"
-              (is (= (io/file home-dir "10" "some-step-id") (root-path home-dir "latest" "some-step-id" "some-artifact.txt"))))))
+    (testing "that explicit build-number selection works"
+      (is (= 1 (build-number-or-latest home-dir 1 "some-step-id" "some-artifact.txt"))))
+    (testing "that 'latest' picks the latest available artifact"
+      (is (= 10 (build-number-or-latest home-dir "latest" "some-step-id" "some-artifact.txt"))))))
 
 (defn map-containing [expected m]
   (and (every? (set (keys m)) (keys expected))
@@ -34,6 +34,9 @@
 
 (defn- file-path-for [home-dir build-number step-id & file-path]
   (apply file-with-parents home-dir "lambdacd-artifacts" (str build-number) step-id file-path))
+
+(defn- file-path-in-home-dir [home-dir & file-path]
+  (apply file-with-parents home-dir file-path))
 
 (defn artifacts [publish-artifacts-result]
   (->> publish-artifacts-result
@@ -109,9 +112,15 @@
       (let [response (handler (mock/request :get "/2/2-3/some-file"))]
         (is (= 404 (:status response)))))
     (testing "that it returns 404 if trying to break out of current working directory"
-      (spit (file-path-for home-dir 3 "2-3" "some-file") "hello world") ; create a base from which we could break out
-      (let [response (handler (mock/request :get "/3/2-3/../../1/2-3/some-file"))]
-        (is (= 404 (:status response)))))))
+      (testing "break out of a specified build-number, step-id"
+        (spit (file-path-for home-dir 3 "2-3" "some-file") "hello world") ; create a base from which we could break out
+        (let [response (handler (mock/request :get "/3/2-3/../../1/2-3/some-file"))]
+          (is (= 404 (:status response)))))
+      (testing "break out of the artifacts-dir"
+        (spit (file-path-for home-dir 3 "2-3" "some-file") "hello world") ; create a base from which we could break out
+        (spit (file-path-in-home-dir home-dir "foo" "bar") "hello world2")
+        (let [response (handler (mock/request :get "/../foo/bar"))]
+          (is (= 404 (:status response))))))))
 
 (deftest integration-test
   (testing "that we can publish an artifact and get it back from the details supplied in the step-result"

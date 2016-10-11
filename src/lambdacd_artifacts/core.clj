@@ -4,7 +4,8 @@
             [ring.util.response :as response]
             [compojure.route :refer :all]
             [compojure.core :refer :all])
-  (:import (java.nio.file Paths)))
+  (:import (java.nio.file Paths)
+           (java.io File)))
 
 (defn- artifacts-root-dir [ctx]
   (let [home-dir (:home-dir (:config ctx))
@@ -15,21 +16,31 @@
 (defn- file-to-build-id [f]
   (read-string (.getName f)))
 
-(defn- find-latest-artifact [artifacts-root step-id path]
+(defn- find-latest-build-number [artifacts-root step-id path]
   (let [build-directories      (sort-by file-to-build-id (.listFiles (io/file artifacts-root)))
         latest-build-directory (last (filter #(.exists (io/file % step-id path)) build-directories))]
-    (io/file latest-build-directory step-id)))
+    (Integer/parseInt (.getName latest-build-directory))))
 
-(defn root-path [artifacts-root build-number step-id path]
+(defn build-number-or-latest [artifacts-root build-number step-id path]
   (if (= build-number "latest")
-    (find-latest-artifact artifacts-root step-id path)
-    (io/file artifacts-root (str build-number) step-id)))
+    (find-latest-build-number artifacts-root step-id path)
+    build-number))
+
+(defn- safe-file-response [artifacts-root build-number step-id path]
+  (let [sep                                  File/separator
+        ; file-response is safe relative to the given root, so we definetely don't want to break out of artifacts root
+        file-response-to-return              (response/file-response (str build-number sep step-id sep path) {:root (str artifacts-root)})
+        ; we also don't want to break out of someones build-number/step-id path so lets check this as well
+        relative-to-build-number-and-step-id (response/file-response path {:root (str artifacts-root sep build-number sep step-id)})]
+    (when (and
+          file-response-to-return
+          relative-to-build-number-and-step-id)
+      file-response-to-return)))
 
 (defn file-result [artifacts-root build-number step-id path]
-  (let [root          (root-path artifacts-root build-number step-id path)
-        file-response (response/file-response path {:root (str root)})]
-    (if file-response
-      file-response
+  (let [build-number-to-return (build-number-or-latest artifacts-root build-number step-id path)]
+    (or
+      (safe-file-response artifacts-root build-number-to-return step-id path)
       (response/not-found (str "could not find " path " for build number " build-number " and step-id " step-id)))))
 
 (defn artifact-handler-for [pipeline]
