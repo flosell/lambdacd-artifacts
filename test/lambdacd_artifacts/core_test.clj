@@ -92,12 +92,17 @@
         pipeline (pipeline-with-homedir home-dir)
         handler  (artifact-handler-for pipeline)]
     (spit (file-path-for home-dir 1 "2-3" "some-file") "hello world")
+    (spit (file-path-for home-dir 12 "2-3" "some-file") "hello world again")
     (spit (file-path-for home-dir 1 "2-3" "some-sub-folder" "some-file") "hello world from subfolder")
 
     (testing "that it returns existing artifacts correctly"
       (let [response (handler (mock/request :get "/1/2-3/some-file"))]
         (is (= 200 (:status response)))
         (is (= (file-path-for home-dir 1 "2-3" "some-file") (:body response)))))
+    (testing "that it returns the latest artifacts correctly"
+      (let [response (handler (mock/request :get "/latest/2-3/some-file"))]
+        (is (= 200 (:status response)))
+        (is (= (file-path-for home-dir 12 "2-3" "some-file") (:body response)))))
     (testing "that it returns existing artifacts in subfolders correctly"
       (let [response (handler (mock/request :get "/1/2-3/some-sub-folder/some-file"))]
         (is (= 200 (:status response)))
