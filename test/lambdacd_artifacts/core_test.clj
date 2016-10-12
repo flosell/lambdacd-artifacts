@@ -17,7 +17,8 @@
     (testing "that explicit build-number selection works"
       (is (= 1 (build-number-or-latest home-dir 1 "some-step-id" "some-artifact.txt"))))
     (testing "that 'latest' picks the latest available artifact"
-      (is (= 10 (build-number-or-latest home-dir "latest" "some-step-id" "some-artifact.txt"))))))
+      (is (= 10 (build-number-or-latest home-dir "latest" "some-step-id" "some-artifact.txt")))
+      (is (= "latest" (build-number-or-latest home-dir "latest" "some-non-existing-step-id" "some-artifact.txt"))))))
 
 (defn map-containing [expected m]
   (and (every? (set (keys m)) (keys expected))

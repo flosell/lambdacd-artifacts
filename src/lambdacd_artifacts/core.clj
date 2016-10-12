@@ -17,9 +17,11 @@
   (read-string (.getName f)))
 
 (defn- find-latest-build-number [artifacts-root step-id path]
-  (let [build-directories      (sort-by file-to-build-id (.listFiles (io/file artifacts-root)))
+  (let [build-directories (sort-by file-to-build-id (.listFiles (io/file artifacts-root)))
         latest-build-directory (last (filter #(.exists (io/file % step-id path)) build-directories))]
-    (Integer/parseInt (.getName latest-build-directory))))
+    (if (nil? latest-build-directory)
+      "latest"
+      (Integer/parseInt (.getName latest-build-directory)))))
 
 (defn build-number-or-latest [artifacts-root build-number step-id path]
   (if (= build-number "latest")
