@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+* fix NullPointerException when no artifact is found for `latest` link, thanks @felixb
+
 ## 0.2.0
 * fix behavior of `latest` link for more than 10 builds (#6), thanks @felixb
 * **security fixes**: Made sure that users can't break out of the directory that contains the artifacts (#7). 
