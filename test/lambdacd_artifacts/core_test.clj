@@ -2,12 +2,11 @@
   (:require [clojure.test :refer :all]
             [lambdacd-artifacts.core :refer :all]
             [lambdacd-artifacts.test-utils :refer [file-with-parents]]
-            [clojure.java.io :as io]
             [ring.mock.request :as mock]
-            [lambdacd.util :as util]))
+            [lambdacd-artifacts.test-utils :as test-utils]))
 
 (deftest build-number-or-latest-test
-  (let [home-dir (util/create-temp-dir) ]
+  (let [home-dir (test-utils/create-temp-dir) ]
     (spit (file-with-parents home-dir "1" "some-step-id" "some-artifact.txt") "uber content")
     (spit (file-with-parents home-dir "2" "some-step-id" "some-artifact.txt") "uber content")
     (spit (file-with-parents home-dir "3" "some-step-id" "some-other-artifact.txt") "not so uber content")
@@ -48,8 +47,8 @@
        (flatten)))
 
 (deftest publish-artifacts-test
-  (let [cwd (util/create-temp-dir)
-        home-dir (util/create-temp-dir)
+  (let [cwd (test-utils/create-temp-dir)
+        home-dir (test-utils/create-temp-dir)
         ctx (ctx-with home-dir 1 [2 3] "")
         ctx-with-artifacts-path (ctx-with home-dir 1 [2 3] "artifacts-path")]
     (spit (file-with-parents cwd "foo.txt") "hello content")
@@ -89,7 +88,7 @@
              (artifacts (publish-artifacts {} ctx cwd [#"(.*)\.txt"])))))))
 
 (deftest artifact-handler-for-test
-  (let [home-dir (util/create-temp-dir)
+  (let [home-dir (test-utils/create-temp-dir)
         pipeline (pipeline-with-homedir home-dir)
         handler  (artifact-handler-for pipeline)]
     (spit (file-path-for home-dir 1 "2-3" "some-file") "hello world")
@@ -130,8 +129,8 @@
 
 (deftest integration-test
   (testing "that we can publish an artifact and get it back from the details supplied in the step-result"
-    (let [cwd      (util/create-temp-dir)
-          home-dir (util/create-temp-dir)
+    (let [cwd      (test-utils/create-temp-dir)
+          home-dir (test-utils/create-temp-dir)
           ctx      (ctx-with home-dir 1 [2 3] "")
           pipeline {:context ctx}
           handler  (artifact-handler-for pipeline)]

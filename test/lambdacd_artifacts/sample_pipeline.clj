@@ -5,7 +5,7 @@
             [lambdacd.steps.manualtrigger :as manualtrigger]
             [lambdacd.core :as lambdacd]
             [ring.server.standalone :as ring-server]
-            [lambdacd.util :as util]
+            [lambdacd-artifacts.test-utils :as test-utils]
             [lambdacd.ui.ui-server :as ui]
             [lambdacd.steps.git :as git]
             [lambdacd.steps.support :as step-support :refer [injected-ctx injected-args]]
@@ -45,7 +45,7 @@
     (context artifacts-path-context [] artifacts)))
 
 (defn -main [& args]
-  (let [home-dir (if (not (empty? args)) (first args) (util/create-temp-dir))
+  (let [home-dir (if (not (empty? args)) (first args) (test-utils/create-temp-dir))
         config {:home-dir home-dir
                 :artifacts-path-context artifacts-path-context}
         pipeline (lambdacd/assemble-pipeline pipeline-structure config)]
