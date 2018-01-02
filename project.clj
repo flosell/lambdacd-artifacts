@@ -7,7 +7,7 @@
                         ["releases" :clojars]]
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [compojure "1.1.8"]
-                 [lambdacd "0.9.0"]]
+                 [lambdacd "0.13.5"]]
   :test2junit-run-ant true
   :profiles {:dev {:dependencies [[ring-server "0.3.1"]
                                   [ring/ring-mock "0.2.0"]]
