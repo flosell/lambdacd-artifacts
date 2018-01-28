@@ -8,7 +8,7 @@
             [lambdacd-artifacts.test-utils :as test-utils]
             [lambdacd.ui.ui-server :as ui]
             [lambdacd.steps.git :as git]
-            [lambdacd.steps.support :as step-support :refer [injected-ctx injected-args]]
+            [lambdacd.stepsupport.chaining :as step-support :refer [injected-ctx injected-args]]
             [lambdacd.runners :as runners]
             [lambdacd-artifacts.core :as artifacts]
             [ring.util.response :as resp]))
