@@ -6,7 +6,7 @@
             [lambdacd.core :as lambdacd]
             [ring.server.standalone :as ring-server]
             [lambdacd-artifacts.test-utils :as test-utils]
-            [lambdacd.ui.ui-server :as ui]
+            [lambdacd.ui.core :as ui]
             [lambdacd.steps.git :as git]
             [lambdacd.stepsupport.chaining :as step-support :refer [injected-ctx injected-args]]
             [lambdacd.runners :as runners]

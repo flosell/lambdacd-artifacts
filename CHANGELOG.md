@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+* Support Clojure 1.9
+
 ## 0.2.1
 * fix NullPointerException when no artifact is found for `latest` link, thanks @felixb
 
